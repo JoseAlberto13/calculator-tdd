@@ -40,5 +40,20 @@ class TestCalculator(unittest.TestCase):
         self.assertEqual(self.calc.power(2, 0), 1)
         self.assertEqual(self.calc.power(2, -2), 0.25)
 
+    def test_validate_input(self):
+        calculator = Calculator()
+        # Prueba caracteres válidos
+        self.assertTrue(calculator.is_valid_input('123'))
+        self.assertTrue(calculator.is_valid_input('123.456'))
+        self.assertTrue(calculator.is_valid_input('123+456'))
+        self.assertTrue(calculator.is_valid_input('123-456'))
+        self.assertTrue(calculator.is_valid_input('123×456'))
+        self.assertTrue(calculator.is_valid_input('123÷456'))
+        
+        # Prueba caracteres inválidos
+        self.assertFalse(calculator.is_valid_input('abc'))
+        self.assertFalse(calculator.is_valid_input('123abc'))
+        self.assertFalse(calculator.is_valid_input('!@#'))
+
 if __name__ == '__main__':
     unittest.main()

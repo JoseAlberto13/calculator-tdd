@@ -20,3 +20,8 @@ class Calculator:
 
     def power(self, base, exponent):
         return base ** exponent
+    
+# Caracteres permitidos: 0123456789.+-×÷
+    def is_valid_input(self, text):
+        valid_chars = set('0123456789.+-×÷')
+        return all(char in valid_chars for char in text)
