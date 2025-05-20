@@ -1,10 +1,12 @@
 import tkinter as tk
-from ttkbootstrap import Bootstyle, Style, ttk
+from ttkbootstrap import Style, ttk
 from calculator import Calculator
+from validator import InputValidator
 
 class CalculatorGUI:
     def __init__(self):
         self.calculator = Calculator()
+        self.validator = InputValidator()
         self.history = []
         self.history_visible = False
         self.dark_mode = True
@@ -74,6 +76,10 @@ class CalculatorGUI:
                                command=lambda x=text: self.click(x))
                 btn.grid(row=row, column=col, columnspan=colspan,
                         sticky='nsew', padx=2, pady=2)
+                
+                # Guardar referencia al botón de historial
+                if text == 'Historial':
+                    self.history_btn = btn
             else:
                 text, row, col, style = button
                 btn = ttk.Button(self.main_frame, text=text,
@@ -100,19 +106,19 @@ class CalculatorGUI:
 
     def _init_history_components(self):
         """Inicializa los componentes relacionados con el historial"""
-        # Crear frame del historial
-        self.history_frame = ttk.Frame(self.root)
+        # Crear frame del historial como hijo del main_frame
+        self.history_frame = ttk.Frame(self.main_frame)
         
-        # Configurar lista del historial con tamaño ajustado
+        # Configurar lista del historial
         self.history_list = tk.Listbox(
             self.history_frame,
             font=('SF Pro Display', 12),
             bg='#2d2d2d',
             fg='white',
             selectmode='single',
-            width=20  # Ancho fijo para el historial
+            height=5  # Altura fija de 5 líneas
         )
-        self.history_list.grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
+        self.history_list.pack(expand=True, fill='both', padx=5, pady=5)
         self.history_list.bind('<Double-Button-1>', self.use_history_item)
         
         # Botón para limpiar historial
@@ -121,40 +127,59 @@ class CalculatorGUI:
             text="Limpiar Historial",
             command=self.clear_history
         )
-        self.clear_history_btn.grid(row=1, column=0, pady=5, padx=5)
+        self.clear_history_btn.pack(pady=5, padx=5)
         
-        # Configurar grid weights
-        self.history_frame.grid_columnconfigure(0, weight=1)
-        self.history_frame.grid_rowconfigure(0, weight=1)
-        
-        # Botón para mostrar/ocultar historial
-        self.toggle_history_btn = ttk.Button(
-            self.main_frame,
-            text="Mostrar Historial",
-            command=self.toggle_history
-        )
-        self.toggle_history_btn.grid(row=6, column=0, columnspan=4, pady=5, padx=5)
+        # Inicialmente el frame de historial está oculto
+        self.history_visible = False
 
     def toggle_history(self):
         """Alterna la visibilidad del panel de historial"""
-        if self.history_visible:
-            self._hide_history()
-        else:
+        if not self.history_visible:
             self._show_history()
-    
-    def _hide_history(self):
-        """Oculta el panel de historial"""
-        self.history_frame.grid_remove()
-        self.root.grid_columnconfigure(1, weight=0)
-        self.toggle_history_btn.configure(text="Mostrar Historial")
-        self.history_visible = False
+        else:
+            self._hide_history()
     
     def _show_history(self):
         """Muestra el panel de historial"""
-        self.history_frame.grid(row=0, column=1, sticky='nsew')
-        self.root.grid_columnconfigure(1, weight=1)
-        self.toggle_history_btn.configure(text="Ocultar Historial")
+        # Colocar el frame de historial en la fila 0
+        self.history_frame.grid(row=0, column=0, columnspan=4, sticky='nsew')
+        
+        # Mover el display a la fila 1
+        self.display.grid(row=1, column=0, columnspan=4, sticky='nsew', padx=5, pady=5, ipady=10)
+        
+        # Mover todos los botones una fila hacia abajo
+        for widget in self.main_frame.winfo_children():
+            if isinstance(widget, ttk.Button):
+                info = widget.grid_info()
+                if info:  # Si el widget está en el grid
+                    row = int(info['row'])
+                    if row > 0:  # Si no es el display
+                        widget.grid(row=row + 1)
+        
+        # Actualizar texto del botón de historial
+        self.history_btn.configure(text="Ocultar Historial")
         self.history_visible = True
+
+    def _hide_history(self):
+        """Oculta el panel de historial"""
+        # Ocultar el frame de historial
+        self.history_frame.grid_remove()
+        
+        # Restaurar posiciones originales
+        self.display.grid(row=0, column=0, columnspan=4, sticky='nsew', padx=5, pady=5, ipady=10)
+        
+        # Restaurar la posición de los botones
+        for widget in self.main_frame.winfo_children():
+            if isinstance(widget, ttk.Button):
+                info = widget.grid_info()
+                if info:  # Si el widget está en el grid
+                    row = int(info['row'])
+                    if row > 1:  # Si está debajo del display movido
+                        widget.grid(row=row - 1)
+        
+        # Actualizar texto del botón de historial
+        self.history_btn.configure(text="Historial")
+        self.history_visible = False
     
     def add_to_history(self, expression, result):
         """Agrega una operación al historial"""
@@ -185,13 +210,45 @@ class CalculatorGUI:
     def toggle_theme(self):
         """Cambia entre tema oscuro y claro"""
         self.dark_mode = not self.dark_mode
-        new_theme = 'darkly' if self.dark_mode else 'litera'
-        self.style.theme_use(new_theme)
+        theme = 'darkly' if self.dark_mode else 'litera'
+        self.style.theme_use(theme)
         
-        # Actualizar el ícono del botón
+        # Actualizar colores y estilos
+        colors = {
+            'bg': '#2d2d2d' if self.dark_mode else '#f5f5f5',
+            'fg': 'white' if self.dark_mode else '#333333',
+            'operation_bg': '#FF9F0A',
+            'number_bg': '#333333' if self.dark_mode else '#303030'
+        }
+        
+        # Actualizar componentes
+        self.history_list.configure(
+            bg=colors['bg'],
+            fg=colors['fg'],
+            font=('SF Pro Display', 12)
+        )
+        
+        # Actualizar estilos de botones
+        self.style.configure('Calculator.TButton', font=('SF Pro Display', 16), padding=15)
+        self.style.configure('Operation.TButton',
+                           background=colors['operation_bg'],
+                           foreground='white',
+                           font=('SF Pro Display', 18))
+        self.style.configure('Number.TButton',
+                           background=colors['number_bg'],
+                           foreground='white',
+                           font=('SF Pro Display', 18))
+        
+        # Actualizar display
+        self.display.configure(
+            font=('SF Pro Display', 36),
+            bootstyle="dark" if self.dark_mode else "light"
+        )
+        
+        # Actualizar ícono del botón de tema
         for widget in self.main_frame.winfo_children():
-            if isinstance(widget, ttk.Button) and widget['text'] in ['🌙', '☀️']:
-                widget['text'] = '☀️' if self.dark_mode else '🌙'
+            if isinstance(widget, ttk.Button) and widget['text'] in ['🌙', '     ☀️']:
+                widget['text'] = '     ☀️' if self.dark_mode else '🌙'
         
         # Actualizar colores del historial y mantener fuentes consistentes
         if hasattr(self, 'history_list'):
@@ -233,13 +290,16 @@ class CalculatorGUI:
             try:
                 expression = self.display.get()
                 expression_original = expression
-                expression = expression.replace('×', '*').replace('÷', '/')
-                result = eval(expression)
+                # Usar el método evaluate de la calculadora en lugar de eval directamente
+                result = self.calculator.evaluate(expression)
                 self.display.delete(0, tk.END)
                 self.display.insert(tk.END, str(result))
                 # Agregar al historial
                 self.add_to_history(expression_original, result)
-            except:
+            except ValueError as e:
+                self.display.delete(0, tk.END)
+                self.display.insert(tk.END, f"Error: {str(e)}")
+            except Exception:
                 self.display.delete(0, tk.END)
                 self.display.insert(tk.END, "Error")
         elif key == '√':
@@ -252,7 +312,7 @@ class CalculatorGUI:
                 self.add_to_history(expression, result)
             except ValueError as e:
                 self.display.delete(0, tk.END)
-                self.display.insert(0, "Error")
+                self.display.insert(0, f"Error: {str(e)}")
         elif key == 'x²':
             try:
                 value = float(self.display.get())
@@ -261,15 +321,18 @@ class CalculatorGUI:
                 self.display.delete(0, tk.END)
                 self.display.insert(tk.END, str(result))
                 self.add_to_history(expression, result)
-            except:
+            except Exception as e:
                 self.display.delete(0, tk.END)
-                self.display.insert(tk.END, "Error")
-        elif key == 'Historial':
+                self.display.insert(tk.END, f"Error: {str(e)}")
+        elif key == 'Historial' or key == 'Ocultar Historial':
             self.toggle_history()
         elif key in ['🌙', '☀️']:  # Manejar el cambio de tema
             self.toggle_theme()
         else:
-            self.display.insert(tk.END, key)
+            # Validar antes de insertar
+            current_text = self.display.get() + key
+            if self.validator.is_valid_input(current_text):
+                self.display.insert(tk.END, key)
         
         self.display.configure(state='readonly')
 
@@ -297,10 +360,18 @@ class CalculatorGUI:
         self.root.mainloop()
 
     def validate_input(self, new_text):
+        """
+        Callback para validar la entrada del display
+        Args:
+            new_text (str): El nuevo texto a validar
+        Returns:
+            bool: True si el texto es válido, False en caso contrario
+        """
         # Permitir que el campo esté vacío
         if not new_text:
             return True
-        return self.calculator.is_valid_input(new_text)
+        # Usar el validador para comprobar si la entrada es válida
+        return self.validator.is_valid_input(new_text)
 
     def handle_keypress(self, event):
         key = event.keysym.lower()

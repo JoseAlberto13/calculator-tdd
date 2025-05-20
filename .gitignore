@@ -7,3 +7,10 @@ htmlcov/
 .env
 venv/
 .vscode/
+build/
+dist/
+calculator_tdd.egg-info/
+__init__.py
+setup.py
+Calculadora Bi6.spec
+Calculator_31111.ico

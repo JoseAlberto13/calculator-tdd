@@ -5,7 +5,7 @@ Este proyecto es una implementación de una calculadora usando la metodología T
 ## 📝 Registro de Desarrollo
 
 ### Fase 1: Configuración Inicial y Primera Prueba
-- Configuración del entorno de desarrollo con Python y pytest
+- Configuración del entorno de desarrollo con Python y unittest
 - Implementación de la primera prueba para la suma
 - Creación de la estructura básica del proyecto
 
@@ -35,7 +35,7 @@ Este proyecto es una implementación de una calculadora usando la metodología T
 
 ## 🛠️ Tecnologías Utilizadas
 - Python 3.x
-- pytest para pruebas unitarias
+- unittest para pruebas unitarias
 - tkinter para la interfaz gráfica
 - ttkbootstrap para dar un aspecto moderno y profesional
 
@@ -50,3 +50,17 @@ git clone [URL de tu repositorio]
 pip install -r requirements.txt
 3. Ejecutar la aplicación:
 python src/gui.py
+
+## 📁 Estructura del Proyecto
+
+```plaintext
+calculator-tdd/
+├── src/
+│   ├── calculator.py         # Lógica de la calculadora
+│   ├── gui.py                # Interfaz gráfica usando tkintery ttkbootstrap
+│   └── validator.py          # Verificación de expresiones matemáticas válidas
+├── tests/
+│   ├── test_calculator.py    # Pruebas unitarias con unittest
+│   └── test_validator.py     # Pruebas unitarias con unittest
+├── requirements.txt          # Dependencias del proyecto
+└── README.md                 # Documentación del proyecto
